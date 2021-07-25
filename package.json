@@ -1,0 +1,40 @@
+{
+  "name": "lazy-eval",
+  "version": "1.0.0",
+  "description": "lazy map/filter/reduce evaluation for large arrays and task qeueus with async baked in",
+  "main": "dist/cjs/index.js",
+  "module": "dist/mjs/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/mjs/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "rm -fr dist/* && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && ./fixup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rajatkb/lazy-eval.git"
+  },
+  "keywords": [
+    "lazy",
+    "evaluation",
+    "functional",
+    "schedule",
+    "qeueu"
+  ],
+  "author": "rajatkb",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rajatkb/lazy-eval/issues"
+  },
+  "homepage": "https://github.com/rajatkb/lazy-eval#readme",
+  "devDependencies": {
+    "@types/jest": "^26.0.24",
+    "jest": "^27.0.6",
+    "ts-jest": "^27.0.4",
+    "typescript": "^4.3.5"
+  }
+}
