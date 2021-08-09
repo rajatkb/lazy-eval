@@ -12,7 +12,7 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "rm -fr dist/* && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && ./fixup"
+    "build": "rm -fr dist/* && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && ./fixup.sh"
   },
   "repository": {
     "type": "git",
@@ -34,6 +34,7 @@
   "devDependencies": {
     "@types/jest": "^26.0.24",
     "jest": "^27.0.6",
+    "node-ts": "^5.1.1",
     "ts-jest": "^27.0.4",
     "typescript": "^4.3.5"
   }
