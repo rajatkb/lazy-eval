@@ -8,6 +8,7 @@
 */
 
 type EmptyList = null
+type Tail = () => LazyList | EmptyList
 
 const empty:EmptyList = null
 
@@ -34,20 +35,26 @@ const lazyValue = <T>(op : () => T ) => {
  * @extends {Node}
  * @implements {Generator}
  */
-export default class LazyList  implements Iterable<any> {
+export default class LazyList  {
    
 
     private tailValueFn: (arg:(v:LazyList|EmptyList) => void) => LazyList|EmptyList
     private _tailValue:LazyList|EmptyList = empty
 
-    private constructor( public head:any , tailOp : () => (LazyList|EmptyList)){
+    private currentValue:LazyList|EmptyList
+
+
+    private constructor( public head:any , tailOp : Tail){
         this.tailValueFn = lazyValue(tailOp)
+        this.currentValue = this
     }
 
     get tail(){
         return this.tailValueFn((v) => this._tailValue = v)
     }
 
+
+    
 
     map(op:(v:any) => any ){
         const node = LazyList.cons(op(this.head) , () => {
@@ -100,26 +107,36 @@ export default class LazyList  implements Iterable<any> {
         } )
     }
 
-    static cons(value:any , op:() => (LazyList|EmptyList)){
+    static cons(value:any , op:Tail){
         return new LazyList(value , op)
     }
 
-    private static _fromArray(array:Array<any> , tailFn: () => LazyList|EmptyList):LazyList{
+
+    // TODO turn this into lazy version as well
+    private static _fromArray(array:Array<any> , tailFn: Tail):LazyList{
         array = Array.isArray(array) ? array : [array]
 
-        let head = new LazyList(array[array.length - 1] ,tailFn)
-        for(let i = array.length - 2 ; i >= 0 ; i--){
-            const prev = head
-            head = new LazyList(array[i] , () => {
-                return prev
-            } )
+        if(array.length === 1){
+            return LazyList.cons(array[0] , tailFn)
         }
-        return head
+
+        return LazyList.cons(array[0] , () => {
+            return LazyList._fromArray(array.splice(1 , array.length) , tailFn)
+        })
     }
 
     static fromArray(array:Array<any>):LazyList{
         return this._fromArray(array , () => empty)
     }
+
+    static fromIterator(iterator:Iterator<any>):LazyList|EmptyList{
+        const result = iterator.next()
+        if(result.done)
+            return empty
+        return LazyList.cons(result.value , () => LazyList.fromIterator(iterator))
+    }
+
+    
 
     public takeAll(){
         const iterator = this[Symbol.iterator]()
@@ -133,6 +150,10 @@ export default class LazyList  implements Iterable<any> {
         return array
     }
 
+    public forEach(){
+
+    };
+
     public take(max:number):Array<any>{
         const iterator = this[Symbol.iterator]()
         const array = []
@@ -145,13 +166,25 @@ export default class LazyList  implements Iterable<any> {
         return array
     }
 
-    public atIndex(i:number){
+    public at(i:number){
         const array = this.take(i+1)
         return array[i] 
     }
-    // TODO sepparet the list generation and the list reading into sepparte generators
 
-    *[Symbol.iterator]():IterableIterator<any>{
+
+    public concat(op : Tail ):LazyList{
+        return LazyList.cons(this.head , () => {
+            if(!this.tail){
+                return op()
+            }
+            return this.tail.concat(op)
+        })
+    }
+
+
+    // TODO find way of building generator object out of list
+
+    *[Symbol.iterator](){
         let node:LazyList = this
         while(true){
             yield node.head
@@ -162,5 +195,7 @@ export default class LazyList  implements Iterable<any> {
             node = tailV
         }
     }
+
+
 
 }
