@@ -62,6 +62,15 @@ export default class LazyList<HType> implements Iterable<HType>{
     }
 
 
+    /**
+     * Converts the `head` data to
+     * target using `op`
+     *
+     * @template T
+     * @param {(v:HType) => T} op
+     * @return {*}  {LazyList<T>}
+     * @memberof LazyList
+     */
     map<T>(op:(v:HType) => T ):LazyList<T>{
         const node = LazyList.cons(op(this.head) , () => {
             if(!this.tail){
@@ -82,6 +91,13 @@ export default class LazyList<HType> implements Iterable<HType>{
 
     // }
 
+    /**
+     * `filter` nodes and return the `head` for the filtered nodes
+     *
+     * @param {(v:HType) => boolean} op
+     * @return {*}  {(LazyList<HType>| EmptyList)}
+     * @memberof LazyList
+     */
     filter(op:(v:HType) => boolean):LazyList<HType>| EmptyList{
 
         const doNext = () => {
@@ -98,6 +114,18 @@ export default class LazyList<HType> implements Iterable<HType>{
          }
     }
 
+    /**
+     *
+     * Returns the `accumulator - seed` result for each pass of access to `next element`
+     * in the list. Useful for accumulating result into the seed 
+     * 
+     *
+     * @template A
+     * @param {(acc: A , v:HType , ) => A} op
+     * @param {A} seed
+     * @return {*}  {LazyList<A>}
+     * @memberof LazyList
+     */
     reduce<A>(op:(acc: A , v:HType , ) => A , seed:A):LazyList<A>{
         seed = op(seed , this.head)
         return LazyList.cons(seed , () => {
@@ -107,6 +135,13 @@ export default class LazyList<HType> implements Iterable<HType>{
         } )
     }
 
+    /**
+     * take `arrays from op` and flatten it
+     * `op` can return primitive array.
+     *
+     * @return {*}  {LazyList<FlatArray<HType , 1>>}
+     * @memberof LazyList
+     */
     flat():LazyList<FlatArray<HType , 1>>{
 
         const head = Array.isArray(this.head) ? <Iterable<FlatArray<HType , 1>>>this.head : [<FlatArray<HType , 1>>this.head] 
@@ -118,6 +153,16 @@ export default class LazyList<HType> implements Iterable<HType>{
         })
     }
 
+    /**
+     * take `head` value takes `array from op` or `value fromr op`
+     * and `flatten` it
+     * 
+     *
+     * @template T
+     * @param {(v:HType) => T} op
+     * @return {*}  {LazyList<FlatArray<T , 1>>}
+     * @memberof LazyList
+     */
     flatMap<T>(op:(v:HType) => T ):LazyList<FlatArray<T , 1>>{
 
         const operatedHead = this.map(op).head
@@ -131,10 +176,32 @@ export default class LazyList<HType> implements Iterable<HType>{
         } )
     }
 
+    /**
+     * Contructor for creating the LazyList
+     *
+     * @static
+     * @template T
+     * @param {T} value
+     * @param {TypedTail<T>} op
+     * @return {*} 
+     * @memberof LazyList
+     */
     static cons<T>(value:T , op:TypedTail<T>){
         return new LazyList<T>(value , op)
     }
 
+    /**
+     * Create LazyLIst from an Array
+     *
+     * @private
+     * @static
+     * @template U
+     * @template T
+     * @param {T} array
+     * @param {TypedTail<U>} tailFn
+     * @return {*}  {LazyList<U>}
+     * @memberof LazyList
+     */
     private static _fromArray<U , T extends Iterable<U>>(array:T , tailFn: TypedTail<U>):LazyList<U>{
         const darray = Array.isArray(array) ? array : [array]
 
@@ -147,10 +214,28 @@ export default class LazyList<HType> implements Iterable<HType>{
         })
     }
 
+    /**
+     * create LazyList from array
+     *
+     * @static
+     * @template T
+     * @param {Array<T>} array
+     * @return {*}  {LazyList<T>}
+     * @memberof LazyList
+     */
     static fromArray<T>(array:Array<T>):LazyList<T>{
         return this._fromArray(array , () => empty)
     }
 
+    /**
+     * Create Lazy list from Iterator
+     *
+     * @static
+     * @template T
+     * @param {Iterator<T>} iterator
+     * @return {*}  {(LazyList<T>|EmptyList)}
+     * @memberof LazyList
+     */
     static fromIterator<T>(iterator:Iterator<T>):LazyList<T>|EmptyList{
         const result = iterator.next()
         if(result.done)
@@ -160,7 +245,15 @@ export default class LazyList<HType> implements Iterable<HType>{
 
     
 
-    public takeAll(){
+    
+    /**
+     * return the resolved laay list as an array
+     * `note:` `can lead to execution of the array endlessly and block main thread
+     *
+     * @return {*}  {HType[]}
+     * @memberof LazyList
+     */
+    public takeAll():HType[]{
         const iterator = this[Symbol.iterator]()
         const array:HType[] = []
        while(true){
@@ -172,6 +265,14 @@ export default class LazyList<HType> implements Iterable<HType>{
         return array
     }
 
+    /**
+     * `taps` into the execution and can pick data from between execution
+     * good place to do SideEffect operations
+     *
+     * @param {(v:HType) => void} op
+     * @return {*}  {LazyList<HType>}
+     * @memberof LazyList
+     */
     public forEach(op:(v:HType) => void):LazyList<HType>{
         op(this.head)
         return LazyList.cons(this.head , () => {
@@ -181,6 +282,13 @@ export default class LazyList<HType> implements Iterable<HType>{
         })
     };
 
+    /**
+     * returns `truthy value` for every LazyList node satisfying the `op`
+     *
+     * @param {<I>(v:I) => boolean} op
+     * @return {*}  {LazyList<boolean>}
+     * @memberof LazyList
+     */
     public every(op:<I>(v:I) => boolean):LazyList<boolean>{
         const truthValue = op(this.head)
         return LazyList.cons(truthValue , () => {
@@ -193,6 +301,13 @@ export default class LazyList<HType> implements Iterable<HType>{
         })
     }
 
+    /**
+     * take `count` of `node` from `LazyList` and returns the list
+     *
+     * @param {number} max
+     * @return {*}  {Array<HType>}
+     * @memberof LazyList
+     */
     public take(max:number):Array<HType>{
         const iterator = this[Symbol.iterator]()
         const array:HType[] = []
@@ -205,11 +320,50 @@ export default class LazyList<HType> implements Iterable<HType>{
         return array
     }
 
-    public at(i:number){
-        const array = this.take(i+1)
-        return array[i] 
+    /**
+     * Gives the `head` value at position
+     * `note:` For infinite list this can block thread for long time
+     * 
+     *
+     * @param {number} index
+     * @return {*} 
+     * @memberof LazyList
+     */
+    public valueAt(index:number){
+        const array = this.take(index+1)
+        return array[index]
     }
 
+    /**
+     * Gives the `node` at position
+     * `note:` For infinite list this can block thread for long time
+     *
+     * @param {number} index
+     * @return {*}  {(LazyList<HType>|undefined)}
+     * @memberof LazyList
+     */
+    public nodeAt(index:number):LazyList<HType>|undefined{
+        const nodeIterator = this.getNodeIterator()
+        let value
+        for(let i = 0 ; i <=index ; i++ ){
+            const result = nodeIterator.next()
+            if(result.done)
+                break
+            value = result.value
+        }
+        return value
+    }
+
+
+
+    /**
+     * Concats a LazyList instance at the end of list of another list
+     *
+     * @template Ctype
+     * @param {LazyList<Ctype>} op
+     * @return {*}  {(LazyList<HType|Ctype>)}
+     * @memberof LazyList
+     */
     public concat<Ctype>(op : LazyList<Ctype> ):LazyList<HType|Ctype>{
         return LazyList.cons(this.head , () => {
             if(!this.tail){
@@ -219,7 +373,15 @@ export default class LazyList<HType> implements Iterable<HType>{
         })
     }
 
-    public concatThunk<Ctype>(op : Tail ):LazyList<HType>{
+    /**
+     * Concats a LazyList creator at the end of list of another list
+     *
+     * @template Ctype
+     * @param {TypedTail<Ctype>} op
+     * @return {*}  {(LazyList<HType|Ctype>)}
+     * @memberof LazyList
+     */
+    public concatThunk<Ctype>(op : TypedTail<Ctype> ):LazyList<HType|Ctype>{
         return LazyList.cons(this.head , () => {
             if(!this.tail){
                 return op()
@@ -228,6 +390,11 @@ export default class LazyList<HType> implements Iterable<HType>{
         })
     }
 
+    /**
+     * returns a usable iterator for the current LazyList head
+     *
+     * @memberof LazyList
+     */
     *getIterator(){
         let node:LazyList<HType> = this
         while(true){
@@ -240,7 +407,12 @@ export default class LazyList<HType> implements Iterable<HType>{
         }
     }
 
-    *_getNodeIterator(){
+    /**
+     * returns a usable for the curreny LazyList Node
+     *
+     * @memberof LazyList
+     */
+    *getNodeIterator(){
         let node:LazyList<HType> = this
         while(true){
             yield node
@@ -259,6 +431,17 @@ export default class LazyList<HType> implements Iterable<HType>{
     }
 
 
+    /**
+     * Creates chunks of list elements in `count` length
+     * each chunk operation greedily consumes the List until count is matched
+     * to return a ` LazyList Node<Array[count]>`
+     * 
+     * Can be used to break up execution and batch the same
+     *
+     * @param {number} count
+     * @return {*}  {LazyList<HType[]>}
+     * @memberof LazyList
+     */
     chunk(count:number):LazyList<HType[]>{
         let icount = count
         const values:HType[] = [this.head]

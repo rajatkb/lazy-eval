@@ -12,9 +12,12 @@ const array2 = array.map((v) => {
     return acc + v
 }, 0).map((v) => {
     return v * 3
-}).chunk(5).flatMap(v => v)
+}).chunk(5)
+
+
 
 console.log(array2.take(30))
+console.log(util.inspect(array2, false, null, true))
 
 
 

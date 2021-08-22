@@ -1,6 +1,6 @@
 import LazyList from '../src'
 
-describe('lazy initialization test' , () => {
+describe('lazy methods test' , () => {
     it('lazy init', () => {
 
         const list = LazyList.fromArray([1 , 2 , 3 , 4 , 5])
@@ -91,8 +91,16 @@ describe('lazy initialization test' , () => {
 
     })
 
+    it('valueAt' , () => {
+        const list = LazyList.fromArray([1 , 2, 3 , 4 , 5])
 
-    
+        expect(list.valueAt(0)).toBe(1)
 
+        expect(list.nodeAt(1)).toBeTruthy()
+
+        expect(list.nodeAt(1)?.head).toBe(2)
+
+        expect(list.nodeAt(6)?.head).toBeTruthy()
+    })
 
 })
